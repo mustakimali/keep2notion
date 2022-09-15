@@ -1,0 +1,1 @@
+Your google takeout exported data for Google Keep goes here. Follow the instruction [here](../README.md) for more information.

@@ -16,7 +16,7 @@
 ## Supported notes
 - [x] Plain text notes
 - [x] To Do Items
-- [ ] Label Archived and Deleted notes
+- [x] Label Archived and Deleted notes
 - [ ] Handle links well
 - [ ] Handle large notes (with > 100 lines)
 - [ ] Handle large paragraph (with > 2000 characters)

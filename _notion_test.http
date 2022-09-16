@@ -52,6 +52,11 @@ Content-Type: application/json
         },
         "Edited": {
             "date": { "start": "2020-12-08T12:00:00Z"}
+        },
+        "Tags": {
+            "multi_select": [
+                {"name": "yo" }
+            ]
         }
     },
     "children": [

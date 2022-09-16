@@ -15,7 +15,12 @@ database_id = os.getenv("NOTION_DATABASE_ID")
 
 
 def PostNote(
-    title, body: str | None, list_items: dict | None, date_created, date_updated
+    title,
+    body: str | None,
+    list_items: dict | None,
+    tags: list,
+    date_created,
+    date_updated,
 ):
     body_json = {
         "parent": {
@@ -26,12 +31,13 @@ def PostNote(
             "title": {"title": [{"type": "text", "text": {"content": title}}]},
             "Created": {"date": {"start": date_created}},
             "Edited": {"date": {"start": date_updated}},
+            "Tags": {"multi_select": tags},
         },
         "children": [],
     }
 
-    last_line = ""
     if body:
+        last_line = ""
         for line in body.splitlines():
             if line == "" and line == last_line:
                 last_line = line
@@ -95,48 +101,52 @@ def PostNote(
         return False
 
 
-def ProcessJson(file: str, data: dict):
-    if "title" in data:
-        title = data["title"]
-        date_created = datetime.datetime.fromtimestamp(
-            data["createdTimestampUsec"] / 1000000
-        )
-        date_updated = datetime.datetime.fromtimestamp(
-            data["userEditedTimestampUsec"] / 1000000
-        )
+def FindTags(data: dict) -> list | None:
+    tags = []
 
-        if "textContent" in data:
-            body = data["textContent"]
+    for key in data.keys():
+        if key.startswith("is") and data[key] == True:
+            name = key[2:]
+            tags.append({"name": name.lower()})
 
-            res = PostNote(
-                title,
-                body,
-                None,
-                f"{date_created}",
-                f"{date_updated}",
-            )
+    return tags
 
-            return res
 
-        elif "listContent" in data:
-            list_content = data["listContent"]
-
-            res = PostNote(
-                title,
-                None,
-                list_content,
-                f"{date_created}",
-                f"{date_updated}",
-            )
-            return res
-
-        else:
-            print(f"Error: No `textContent` or `listContent` in {file}")
-
-    else:
+def ProcessJson(file: str, data: dict) -> bool:
+    if "title" not in data:
         print(f"Error: No `title` in {file} (in this a valid Google Takeout json?)")
+        return False
+    title = data["title"]
+    date_created = datetime.datetime.fromtimestamp(
+        data["createdTimestampUsec"] / 1000000
+    )
+    date_updated = datetime.datetime.fromtimestamp(
+        data["userEditedTimestampUsec"] / 1000000
+    )
+    tags = FindTags(data)
 
-    return False
+    body = None
+    list_content = None
+
+    if "textContent" in data:
+        body = data["textContent"]
+
+    if "listContent" in data:
+        list_content = data["listContent"]
+
+    if body == None and list_content == None:
+        print(f"Error: No `textContent` or `listContent` in {file}")
+        return False
+
+    res = PostNote(
+        title,
+        body,
+        list_content,
+        tags,
+        f"{date_created}",
+        f"{date_updated}",
+    )
+    return res
 
 
 success = 0
@@ -157,6 +167,7 @@ for file in notes:
             success += 1
         else:
             failed += 1
+        # break
 
     finally:
         f.close()

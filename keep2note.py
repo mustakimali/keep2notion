@@ -3,6 +3,7 @@
 import datetime
 import json
 import os
+import uuid
 import requests
 from dotenv import load_dotenv
 
@@ -19,6 +20,7 @@ def PostNote(
     body: str | None,
     list_items: dict | None,
     tags: list,
+    attachments: list,
     date_created,
     date_updated,
 ):
@@ -31,10 +33,79 @@ def PostNote(
             "title": {"title": [{"type": "text", "text": {"content": title}}]},
             "Created": {"date": {"start": date_created}},
             "Edited": {"date": {"start": date_updated}},
-            "Tags": {"multi_select": tags},
         },
         "children": [],
     }
+
+    if list_items:
+        for item in list_items:
+            checked = item["isChecked"]
+            text = item["text"]
+
+            body_json["children"].append(
+                {
+                    "type": "to_do",
+                    "to_do": {
+                        "rich_text": [
+                            {
+                                "type": "text",
+                                "text": {"content": text},
+                            }
+                        ],
+                        "checked": checked,
+                        "color": "default",
+                    },
+                }
+            )
+
+    if attachments:
+        tag_added_image = False
+        tag_added_migration_error = False
+
+        for item in attachments:
+            file_path = os.path.join(root_dir, item["filePath"])
+            if os.path.exists(file_path) is False:
+                print(f"Invalid file {file_path}")
+
+                if body:
+                    body += f"\nMigration Error: Invalid attachment file {file_path}"
+
+                if tag_added_migration_error == False:
+                    tags.append({"name": "migration_error"})
+                    tag_added_migration_error = True
+                continue
+
+            f = open(file_path, "rb")
+
+            try:
+                id = uuid.uuid4()
+                ext = file_path[-3:]
+                url = f"https://image-server.mustakim.dev/{id}.{ext}"
+                print(f"[{title}]: Uploading: {url}")
+
+                res = requests.post(url, files={"file": f.read()})
+                if res.status_code != 202:
+                    err = f"Error posting image {file_path} to {url}\n{res.content.decode()}"
+                    print(err)
+                    if body:
+                        body += f"\nMigration Error: {err}"
+
+                    if tag_added_migration_error == False:
+                        tags.append({"name": "migration_error"})
+                        tag_added_migration_error = True
+                    return False
+
+                body_json["children"].append(
+                    {
+                        "type": "image",
+                        "image": {"type": "external", "external": {"url": url}},
+                    }
+                )
+                if tag_added_image == False:
+                    tags.append({"name": "image"})
+                    tag_added_image = True
+            finally:
+                f.close()
 
     if body:
         last_line = ""
@@ -61,28 +132,8 @@ def PostNote(
             )
 
             last_line = line
-    if list_items:
-        for item in list_items:
-            checked = item["isChecked"]
-            text = item["text"]
 
-            body_json["children"].append(
-                {
-                    "type": "to_do",
-                    "to_do": {
-                        "rich_text": [
-                            {
-                                "type": "text",
-                                "text": {"content": text},
-                            }
-                        ],
-                        "checked": checked,
-                        "color": "default",
-                    },
-                }
-            )
-
-    print(f"Importing: {title}...", end="")
+    body_json["properties"]["Tags"] = {"multi_select": tags}
 
     res = requests.post(
         "https://api.notion.com/v1/pages",
@@ -94,10 +145,9 @@ def PostNote(
     )
 
     if res.status_code == 200:
-        print(f"✅")
         return True
     else:
-        print(f"Error {res.status_code}: {res.content.decode()}")
+        print(f"[{title}] Error {res.status_code}: {res.content.decode()}")
         return False
 
 
@@ -127,15 +177,19 @@ def ProcessJson(file: str, data: dict) -> bool:
 
     body = None
     list_content = None
+    attachments = None
 
-    if "textContent" in data:
+    if "textContent" in data and data["textContent"] != "":
         body = data["textContent"]
 
     if "listContent" in data:
         list_content = data["listContent"]
 
-    if body == None and list_content == None:
-        print(f"Error: No `textContent` or `listContent` in {file}")
+    if "attachments" in data:
+        attachments = data["attachments"]
+
+    if body == None and list_content == None and attachments == None:
+        print(f"Error: No `textContent`, `listContent` or `attachments` in {file}")
         return False
 
     res = PostNote(
@@ -143,6 +197,7 @@ def ProcessJson(file: str, data: dict) -> bool:
         body,
         list_content,
         tags,
+        attachments,
         f"{date_created}",
         f"{date_updated}",
     )

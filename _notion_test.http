@@ -55,11 +55,20 @@ Content-Type: application/json
         },
         "Tags": {
             "multi_select": [
-                {"name": "yo" }
+                { "name": "archived" }
             ]
         }
     },
     "children": [
+        {
+            "type": "image",
+            "image": {
+                "type": "external",
+                "external": {
+                    "url": "https://image-server.mustakim.dev/ae33100e-988e-47f4-aa18-7e9a5c4a0ebb.png"
+                }
+            }
+        },
         {
             "object": "block",
             "type": "paragraph",
@@ -74,7 +83,6 @@ Content-Type: application/json
                     }
                 ]
             }
-
         }
     ]
 }

@@ -1,0 +1,87 @@
+{
+  "db": "SQLite",
+  "42ad994af400d032b853a4499fbb7ad61630088171f3f725008f7ed4b0417b03": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Blob"
+        },
+        {
+          "name": "data",
+          "ordinal": 1,
+          "type_info": "Blob"
+        },
+        {
+          "name": "date",
+          "ordinal": 2,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "select\n                    id \"id: Uuid\",\n                    data,\n                    date\n                from images where id = $1"
+  },
+  "55118f1c06a573c85078e44883370c282871fc6c1ca6d44638f008114ef01318": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "delete from images"
+  },
+  "68e5b18065214fbbbc105ae55150a8bb8b2870a47bee44391c00f3664fb1fc3c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "insert into images (id, data, date) values ($1, $2, $3)"
+  },
+  "72dde8b6c76f5147f3f4544c501dfdbda51d392989983ed65f470bc0ffeed8a3": {
+    "describe": {
+      "columns": [
+        {
+          "name": "num_items",
+          "ordinal": 0,
+          "type_info": "Int"
+        },
+        {
+          "name": "total_size",
+          "ordinal": 1,
+          "type_info": "Int"
+        }
+      ],
+      "nullable": [
+        false,
+        true
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "select count(*) num_items, ifnull(sum(length(data)), 0) as total_size from images"
+  },
+  "c11862efda83db84dd8da86278ebcec2e574d78e4e017ace8b2126e5be3762a0": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "delete from images where id = $1"
+  }
+}

@@ -1,0 +1,110 @@
+##############################################################################
+#                                NAMESPACE                                   #
+##############################################################################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: image-server
+---
+##############################################################################
+#                         INGRESS+DEPLOYMENTS                                #
+##############################################################################
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: image-server-ingress
+  namespace: image-server
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      gzip on;
+      gzip_types text/plain application/xml images/* image/* text/* application/json image/jpg;
+spec:
+  tls:
+    - hosts:
+      - image-server.mustakim.dev
+  rules:
+  - host: image-server.mustakim.dev
+    http:
+      paths:
+      - backend:
+          serviceName: image-server-service
+          servicePort: 80
+---
+kind: Deployment
+
+apiVersion: apps/v1
+metadata:
+  name: image-server
+  namespace: image-server
+  labels:
+    app: image-server
+spec:
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: image-server
+
+  template:
+    metadata:
+      labels:
+        app: image-server
+    spec:
+      volumes:
+        - name: image-server-vol-data
+          hostPath:
+            path: /storage/image-server/data
+      containers:
+      - name: image-server
+        image: mustakimali/private:image-server-220917_1909
+        command: ["/app/image-server"]
+        args: ["server"]
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+          - name: image-server-vol-data
+            mountPath: /app/data
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 128m
+            memory: 50Mi
+      imagePullSecrets:
+        - name: regcred
+---
+kind: Service
+
+apiVersion: v1
+metadata:
+  name: image-server-service
+  namespace: image-server
+spec:
+  selector:
+    app: image-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: image-server-hpa
+  namespace: image-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: image-server
+  minReplicas: 1
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 100

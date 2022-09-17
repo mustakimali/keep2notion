@@ -1,3 +1,4 @@
 keep-data
 !keep-data/README.md
 .env
+image-server/data

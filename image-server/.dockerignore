@@ -1,0 +1,5 @@
+**/target
+Dockerfile
+.env
+deploy/
+data/

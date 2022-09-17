@@ -1,5 +1,7 @@
 # Google Keep to Notion
 
+![demo](demo.jpg)
+
 ## How to use
 
 * Take a [Google Takeout](https://takeout.google.com/) for Google Keep notes.

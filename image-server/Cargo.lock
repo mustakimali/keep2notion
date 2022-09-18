@@ -778,6 +778,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gethostname"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1ebd34e35c46e00bb73e81363248d627782724609fe1b6396f553f68fe3862e"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -929,12 +939,15 @@ dependencies = [
  "anyhow",
  "futures-util",
  "image",
+ "opentelemetry",
  "serde",
  "serde_json",
  "sqlx",
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-actix-web",
+ "tracing-bunyan-formatter",
  "tracing-opentelemetry",
  "tracing-subscriber",
  "uuid",
@@ -1284,6 +1297,8 @@ dependencies = [
  "pin-project",
  "rand",
  "thiserror",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
@@ -2010,6 +2025,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-actix-web"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0b2cd6e5074ff67679a0ff68bc6333be78d29910ba7cd295d948aa5ff152032"
+dependencies = [
+ "actix-web",
+ "pin-project",
+ "tracing",
+ "tracing-futures",
+ "uuid",
+]
+
+[[package]]
 name = "tracing-attributes"
 version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2021,6 +2049,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-bunyan-formatter"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a788f2119fde477cd33823330c14004fa8cdac6892fd6f12181bbda9dbf14fc9"
+dependencies = [
+ "gethostname",
+ "log",
+ "serde",
+ "serde_json",
+ "time",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tracing-core"
 version = "0.1.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2028,6 +2073,16 @@ checksum = "5aeea4303076558a00714b823f9ad67d58a3bbda1df83d8827d21193156e22f7"
 dependencies = [
  "once_cell",
  "valuable",
+]
+
+[[package]]
+name = "tracing-futures"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
+dependencies = [
+ "pin-project",
+ "tracing",
 ]
 
 [[package]]

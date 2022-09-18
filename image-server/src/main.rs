@@ -5,20 +5,24 @@ use serde_json::json;
 use std::{io::Cursor, sync::Arc};
 use thiserror::Error;
 use tracing::Instrument;
+use tracing_actix_web::TracingLogger;
 use uuid::Uuid;
 
 mod db;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
     use tracing_subscriber::layer::SubscriberExt;
-    use tracing_subscriber::Registry;
+    use tracing_subscriber::{EnvFilter, Registry};
 
-    let layer_console = tracing_subscriber::fmt::Layer::new();
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("info"));
+    let formatting_layer = BunyanFormattingLayer::new("image-server".to_string(), std::io::stdout);
 
     let subscriber = Registry::default()
-        .with(tracing_subscriber::EnvFilter::new("INFO"))
-        .with(layer_console);
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
@@ -27,7 +31,6 @@ async fn main() -> std::io::Result<()> {
         .await
 }
 
-#[tracing::instrument]
 async fn start() -> std::io::Result<()> {
     let port = std::env::var("PORT")
         .unwrap_or("8000".into())
@@ -41,12 +44,12 @@ async fn start() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(ctx.clone()))
-            .wrap(actix_web::middleware::Logger::default())
+            .wrap(TracingLogger::default())
             .service(health)
-            .service(get)
-            .service(post)
-            .service(delete)
-            .service(clear)
+            .service(image_get)
+            .service(image_post)
+            .service(image_delete)
+            .service(image_clear)
     })
     .bind(("0.0.0.0", port))?
     .run()
@@ -87,14 +90,14 @@ impl actix_web::ResponseError for AppError {
 }
 
 #[get("/health")]
-#[tracing::instrument()]
+#[tracing::instrument]
 async fn health() -> impl Responder {
     HttpResponse::Ok()
 }
 
 #[post("/{id}.{ext}")]
 #[tracing::instrument(skip(state, payload))]
-async fn post(
+async fn image_post(
     state: web::Data<Arc<AppContext>>,
     param: web::Path<(Uuid, String)>,
     mut payload: Multipart,
@@ -141,7 +144,7 @@ async fn post(
 
 #[get("/{id}.{ext}")]
 #[tracing::instrument(skip(state))]
-async fn get(
+async fn image_get(
     state: web::Data<Arc<AppContext>>,
     param: web::Path<(Uuid, String)>,
 ) -> Result<impl Responder, AppError> {
@@ -160,7 +163,7 @@ async fn get(
 
 #[delete("/{id}.{ext}")]
 #[tracing::instrument(skip(state))]
-async fn delete(
+async fn image_delete(
     state: web::Data<Arc<AppContext>>,
     param: web::Path<(Uuid, String)>,
 ) -> Result<impl Responder, AppError> {
@@ -176,7 +179,7 @@ async fn delete(
 
 #[delete("/_all_")]
 #[tracing::instrument(skip(state))]
-async fn clear(state: web::Data<Arc<AppContext>>) -> Result<impl Responder, AppError> {
+async fn image_clear(state: web::Data<Arc<AppContext>>) -> Result<impl Responder, AppError> {
     if let Ok((num_items, total_size)) = state.db.clear().await {
         Ok(HttpResponse::Ok().body(
             json!({

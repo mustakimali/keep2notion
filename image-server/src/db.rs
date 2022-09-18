@@ -19,6 +19,7 @@ impl Database {
         Ok(Self(pool))
     }
 
+    #[tracing::instrument(skip(self, data))]
     pub async fn add(&self, id: Uuid, data: &[u8]) -> anyhow::Result<()> {
         let date = unix_epoc()?;
         sqlx::query!(
@@ -33,6 +34,7 @@ impl Database {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn get(&self, id: Uuid) -> anyhow::Result<Option<Image>> {
         sqlx::query_as!(
             Image,
@@ -48,6 +50,7 @@ impl Database {
         .map_err(anyhow::Error::from)
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn delete(&self, id: Uuid) -> anyhow::Result<bool> {
         let result = sqlx::query!("delete from images where id = $1", id)
             .execute(&self.0)
@@ -55,6 +58,7 @@ impl Database {
         Ok(result.rows_affected() > 0)
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn clear(&self) -> anyhow::Result<(i32, i32)> {
         let summary = sqlx::query!(
             r#"select count(*) num_items, ifnull(sum(length(data)), 0) as total_size from images"#

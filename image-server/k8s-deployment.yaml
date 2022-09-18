@@ -57,7 +57,7 @@ spec:
             path: /storage/image-server/data
       containers:
       - name: image-server
-        image: mustakimali/private:image-server-220917_1909
+        image: mustakimali/private:image-server-220918_1211
         command: ["/app/image-server"]
         args: ["server"]
         ports:

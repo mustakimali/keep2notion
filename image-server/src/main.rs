@@ -46,6 +46,7 @@ async fn start() -> std::io::Result<()> {
             .app_data(web::Data::new(ctx.clone()))
             .wrap(TracingLogger::default())
             .service(health)
+            .service(image_stats)
             .service(image_get)
             .service(image_post)
             .service(image_delete)
@@ -181,6 +182,22 @@ async fn image_delete(
 #[tracing::instrument(skip(state))]
 async fn image_clear(state: web::Data<Arc<AppContext>>) -> Result<impl Responder, AppError> {
     if let Ok((num_items, total_size)) = state.db.clear().await {
+        Ok(HttpResponse::Ok().body(
+            json!({
+                "total_items": num_items,
+                "total_size_bytes": total_size
+            })
+            .to_string(),
+        ))
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
+}
+
+#[get("/_stats_")]
+#[tracing::instrument(skip(state))]
+async fn image_stats(state: web::Data<Arc<AppContext>>) -> Result<impl Responder, AppError> {
+    if let Ok((num_items, total_size)) = state.db.stats().await {
         Ok(HttpResponse::Ok().body(
             json!({
                 "total_items": num_items,

@@ -60,13 +60,19 @@ impl Database {
 
     #[tracing::instrument(skip(self))]
     pub async fn clear(&self) -> anyhow::Result<(i32, i32)> {
+        let summary = self.stats().await?;
+
+        let _ = sqlx::query!("delete from images").execute(&self.0).await?;
+
+        Ok(summary)
+    }
+
+    pub async fn stats(&self) -> anyhow::Result<(i32, i32)> {
         let summary = sqlx::query!(
             r#"select count(*) num_items, ifnull(sum(length(data)), 0) as total_size from images"#
         )
         .fetch_one(&self.0)
         .await?;
-
-        let _ = sqlx::query!("delete from images").execute(&self.0).await?;
 
         Ok((summary.num_items, summary.total_size.unwrap_or_default()))
     }

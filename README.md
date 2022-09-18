@@ -9,8 +9,8 @@
 * Copy all files from `Takeout/Keep` into the folder `keep-data` next to `keep2note.py`
 * Rename `.env.sample` -> `.env` and populate the value
   * [Create an internal integration](https://developers.notion.com/docs/getting-started#step-1-create-an-integration) and populate the `NOTION_ACCESS_KEY` with the Internal Integration Token.
-    * ⚠️ Make sure to add two extra fields in the database created as part of this. They are `Created` and `Edited` (of type Date). These dates are populated to reflect the create and last edit time of the note in Google Keep.
   * Create a Database and add this integration using the `Add Connection` option by [following the steps here](https://developers.notion.com/docs/getting-started#step-1-create-an-integration). Then copy paste the URL of the ID of the database.
+    * ⚠️ Make sure to add two extra fields in the database created as part of this. They are `Created` and `Edited` (of type Date). These dates are populated to reflect the create and last edit time of the note in Google Keep.
   * For example: If the address is `https://www.notion.so/your_user_name/9e7f1e7b40cb4121a158846c5b93009d?v=93b29b811eac4775ae41a2e179bfded2` then the ID is `9e7f1e7b40cb4121a158846c5b93009d`
   * If you want to migrate images, then you'll need to host the [image server](./image-server/) app. Then populate the `IMAGE_SERVER_URL` (example: `https://my-image-server.example.com/` <- note the trailing `/`)
 

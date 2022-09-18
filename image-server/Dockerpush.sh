@@ -9,9 +9,6 @@ if [[ -z "$dock_version" ]]; then
     dock_version=$(get_version)
 fi
 
-#echo "Building public app to fly.io"
-#fly deploy .
-
 echo "Building image verion:$dock_version"
 
 docker build . -t image-server

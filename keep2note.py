@@ -13,6 +13,7 @@ root_dir = "keep-data"
 notes = os.listdir(root_dir)
 access_token = os.getenv("NOTION_ACCESS_KEY")
 database_id = os.getenv("NOTION_DATABASE_ID")
+image_server_url = os.getenv("IMAGE_SERVER_URL")
 
 
 def PostNote(
@@ -74,13 +75,18 @@ def PostNote(
                     tags.append({"name": "migration_error"})
                     tag_added_migration_error = True
                 continue
+            elif body:
+                body += f"\nMigration: Attachment file: {file_path}"
+
+            if image_server_url == "":
+                continue
 
             f = open(file_path, "rb")
 
             try:
                 id = uuid.uuid4()
                 ext = file_path[-3:]
-                url = f"https://image-server.mustakim.dev/{id}.{ext}"
+                url = f"{image_server_url}{id}.{ext}"
                 print(f"[{title}]: Uploading: {url}")
 
                 res = requests.post(url, files={"file": f.read()})
@@ -179,7 +185,7 @@ def ProcessJson(file: str, data: dict) -> bool:
     list_content = None
     attachments = None
 
-    if "textContent" in data and data["textContent"] != "":
+    if "textContent" in data:
         body = data["textContent"]
 
     if "listContent" in data:

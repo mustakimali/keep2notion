@@ -17,7 +17,3 @@ docker-run:
 .PHONY: docker-push
 docker-push:
 	./Dockerpush.sh
-
-.PHONY: docker-push-local
-docker-push-local:
-	./Dockerpush.local.sh
